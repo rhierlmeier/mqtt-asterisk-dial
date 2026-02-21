@@ -6,15 +6,21 @@ Stattdessen soll der SIP-Call direkt an eine Fritzbox gesendet werden.
 Der Inhalt des MQTT-Topics ist eine Nummer. In der conf.yaml soll unter dieser Nummer eine Audiodatei hinterlegt sein,
 die im SIP-Call übermittelt wird.
 
-Struktur der conf.yaml:
+Das Problem kann mehrere Meldungen verwalten.
+Eine Meldung kann mehrere Variablen haben.
+Der Pfad zu der Audiodatei kann Variable nutzen.
+
+
+Beispiel Konfiguration-Datei conf.yaml:
 ```yaml
 numbers:
   - 089/123133
   - 089/123134
 
 messages:
-  - mqtt_topic: <name of the mqtt topic>
-    mqtt_values:
-        - value: <value of the mqtt topic>
-          audioFile: <path to the audio file>
+  - mqtt_topic: homie/hargassner/stoerung/active
+    variables:
+      - name: storeNr
+        mqtt_topic: homie/hargassner/stoerung/nr
+    audio_file: /home/pi/audio/${storNr}.wav
 ```         

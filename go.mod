@@ -4,12 +4,12 @@ go 1.24.0
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.1
+	github.com/ghettovoice/gosip v0.0.0-20260213084653-fc443dc7211f
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/discoviking/fsm v0.0.0-20150126104936-f4a273feecca // indirect
-	github.com/ghettovoice/gosip v0.0.0-20260213084653-fc443dc7211f // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.1.0-rc.1 // indirect

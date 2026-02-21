@@ -26,13 +26,14 @@ type SIPConfig struct {
 }
 
 type Message struct {
-	MqttTopic  string      `yaml:"mqtt_topic"`
-	MqttValues []MqttValue `yaml:"mqtt_values"`
+	MqttTopic string     `yaml:"mqtt_topic"`
+	Variables []Variable `yaml:"variables"`
+	AudioFile string     `yaml:"audio_file"`
 }
 
-type MqttValue struct {
-	Value     string `yaml:"value"`
-	AudioFile string `yaml:"audioFile"`
+type Variable struct {
+	Name      string `yaml:"name"`
+	MqttTopic string `yaml:"mqtt_topic"`
 }
 
 func (c *Config) LoadFromFile(filePath string) error {

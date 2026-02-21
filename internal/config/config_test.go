@@ -22,9 +22,10 @@ func TestConfigValidate(t *testing.T) {
 				Messages: []Message{
 					{
 						MqttTopic: "topic",
-						MqttValues: []MqttValue{
-							{Value: "true", AudioFile: "file.wav"},
+						Variables: []Variable{
+							{Name: "var1", MqttTopic: "topic1"},
 						},
+						AudioFile: "file_${var1}.wav",
 					},
 				},
 			},
@@ -37,7 +38,7 @@ func TestConfigValidate(t *testing.T) {
 					Host: "1.2.3.4",
 				},
 				Messages: []Message{
-					{MqttTopic: "topic"},
+					{MqttTopic: "topic", AudioFile: "file.wav"},
 				},
 			},
 			wantErr: true,
@@ -47,7 +48,7 @@ func TestConfigValidate(t *testing.T) {
 			config: Config{
 				Broker: "tcp://localhost:1883",
 				Messages: []Message{
-					{MqttTopic: "topic"},
+					{MqttTopic: "topic", AudioFile: "file.wav"},
 				},
 			},
 			wantErr: true,

@@ -1,38 +1,33 @@
-# mqtt-asterisk-dial
+# mqtt-sip-dial
 
-mqtt-asterisk-dial is a Go application that connects to an MQTT broker. It obereves one or more MQTT topics. When the values of such a topic has a defined
-values then an Asterisk call file is written.
+`mqtt-sip-dial` ist eine Go-Anwendung, die sich mit einem MQTT-Broker verbindet und auf definierte Topics hört. Wenn eine Nachricht auf einem konfigurierten Trigger-Topic empfangen wird, initiiert die Anwendung einen direkten SIP-Anruf (z. B. an eine Fritzbox) und spielt eine konfigurierte Audiodatei ab.
 
-The content of the call files is rendered via a GO template. This template has 
-access to values of MQTT topics.
+Die Pfade zu den Audiodateien können Variablen enthalten, deren Werte aus zusätzlichen MQTT-Topics bezogen werden.
 
-# Configuration
+# Konfiguration
 
-The mqtt-asterisk-dial is configured via a configuration yaml file that
-can be configured via the `-config` command line param. Default location is `./conf.yaml`).
+Die Anwendung wird über eine YAML-Datei konfiguriert, die über den Parameter `-config` angegeben werden kann (Standard: `./conf.yaml`).
 
-You can find a sample configuration file [here](./conf.yaml).
+Eine Beispielkonfiguration findest du [hier](./conf.yaml).
 
-## Usage in Docker
+## SIP-Integration
 
-To use mqtt-asterisk-dial with Docker, you can utilize the provided Docker Compose configuration. You can find the sample Docker Compose file [here](./samples/docker/docker-compose.yaml).
+Im Gegensatz zur früheren Version benötigt diese Anwendung kein Asterisk mehr. Der Anruf wird direkt per SIP an den konfigurierten Host (z. B. eine Fritzbox) gesendet.
 
-## Project Structure
+## Projektstruktur
 
 ```
-mqtt-asterisk-dial
+mqtt-sip-dial
 ├── cmd
 │   └── mqtt-asterisk-dial
-│       └── main.go        # Entry point of the application
+│       └── main.go        # Einstiegspunkt der Anwendung
 ├── internal
 │   ├── config
-│   │   └── config.go      # Configuration settings
-│   ├── mqtt
-│   │   └── client.go      # MQTT client management
+│   │   └── config.go      # Konfigurationseinstellungen
 │   └── dial
-│       └── dial.go        # Dialing logic
-├── go.mod                  # Module definition
-└── README.md               # Project documentation
+│       └── dial.go        # Dialing-Logik und SIP-Handling
+├── go.mod                  # Modul-Definition
+└── README.md               # Projektdokumentation
 ```
 
 ## Setup Instructions

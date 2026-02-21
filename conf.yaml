@@ -1,5 +1,5 @@
 
-# Sample configuration for the direct SIP dialer
+# Configuration for the direct SIP dialer to Fritzbox
 broker: tcp://localhost:1883
 client_id: mqtt-sip-dial
 username: mqtt_user
@@ -16,8 +16,9 @@ numbers:
 
 messages:
   - mqtt_topic: homie/hargassner/stoerung/active
-    mqtt_values:
-        - value: "true"
-          audioFile: /path/to/stoerung.wav
+    variables:
+      - name: storeNr
+        mqtt_topic: homie/hargassner/stoerung/nr
+    audio_file: /home/pi/audio/${storeNr}.wav
       
     
