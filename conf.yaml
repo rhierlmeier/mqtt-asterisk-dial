@@ -1,45 +1,23 @@
 
-# Sample configuration file for the mqtt-asterik-dial application
-
-# Defines the connection URL to MQTT
-# e.g tcp://localhost:1883, ssl://localhost:8883
-broker: ssl://localhost:8883
-
-# Defines the MQTT client id for this applicatin
-# (Optional, default value: mqtt-asterisk-dial
-client_id: mqtt-asterisk-dial
-
-# Defines the MQTT username and password
-# Both are optional
+# Sample configuration for the direct SIP dialer
+broker: tcp://localhost:1883
+client_id: mqtt-sip-dial
 username: mqtt_user
 password: mqtt_password
 
-# Directory where the Asterisk call files are stored
-call_file_dir: test/out
+sip:
+  host: 192.168.178.1
+  user: fritzbox_user
+  password: fritzbox_password
 
-# calls defines a list of call templates. Each call template subscribes to
-# topic. When the topic has a certain value, then the Astserisk call file is
-# created.
-calls:
-  # Name of the call template (only used for logging)
-  - name: Hargassner Stoermeldung
-    # Topic that is observed
-    topic: homie/hargassner/stoerung/active
-    # Value that triggers the call file creation
-    value: "true"
+numbers:
+  - 089/123133
+  - 089/123134
 
-    # Defines the GO template that is used to create the Asterisk call file
-    # The template has access to values of MQTT topics. 
-    template: |-
-      Channel: Local/start@heizung_melde_kette
-      Context: stoermeldung
-      Extension: 10
-      Setvar: stoerNr={{ .stoerNr }}
-
-    # List of values that can be used in the GO template that
-    # creates the Asterisk call file
-    variables:
-      - name: stoerNr
-        topic: homie/hargassner/stoerung/nr
+messages:
+  - mqtt_topic: homie/hargassner/stoerung/active
+    mqtt_values:
+        - value: "true"
+          audioFile: /path/to/stoerung.wav
       
     

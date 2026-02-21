@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -13,22 +13,26 @@ type Config struct {
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 
-	CallFileDir string `yaml:"call_file_dir"`
+	SIP SIPConfig `yaml:"sip"`
 
-	Calls []CallTemplate `yaml:"calls"`
+	Numbers  []string  `yaml:"numbers"`
+	Messages []Message `yaml:"messages"`
 }
 
-type CallTemplate struct {
-	Name             string         `yaml:"name"`
-	Topic            string         `yaml:"topic"`
-	Value            string         `yaml:"value"`
-	CallFileTemplate string         `yaml:"template"`
-	Variables        []CallVariable `yaml:"variables"`
+type SIPConfig struct {
+	Host     string `yaml:"host"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
 }
 
-type CallVariable struct {
-	Topic string `yaml:"topic"`
-	Name  string `yaml:"name"`
+type Message struct {
+	MqttTopic  string      `yaml:"mqtt_topic"`
+	MqttValues []MqttValue `yaml:"mqtt_values"`
+}
+
+type MqttValue struct {
+	Value     string `yaml:"value"`
+	AudioFile string `yaml:"audioFile"`
 }
 
 func (c *Config) LoadFromFile(filePath string) error {
@@ -39,47 +43,15 @@ func (c *Config) LoadFromFile(filePath string) error {
 	defer file.Close()
 
 	decoder := yaml.NewDecoder(file)
-	ret := decoder.Decode(c)
+	err = decoder.Decode(c)
+	if err != nil {
+		return err
+	}
 
 	if err := c.Validate(); err != nil {
 		return err
 	}
 
-	return ret
-}
-
-func checkDirExists(dir string) error {
-	fileInfo, err := os.Stat(dir)
-	if os.IsNotExist(err) {
-		return fmt.Errorf("directory %s does not exist", dir)
-	}
-	if !fileInfo.IsDir() {
-		return fmt.Errorf("path %s is not a directory", dir)
-	}
-	return nil
-}
-
-func (ct *CallTemplate) Validate() error {
-	if ct.Name == "" {
-		return fmt.Errorf("name cannot be empty")
-	}
-
-	if ct.Topic == "" {
-		return fmt.Errorf("topic cannot be empty")
-	}
-
-	if ct.CallFileTemplate == "" {
-		return fmt.Errorf("template cannot be empty")
-	}
-
-	for varIndex, variable := range ct.Variables {
-		if variable.Name == "" {
-			return fmt.Errorf("variables[%d].name cannot be empty", varIndex)
-		}
-		if variable.Topic == "" {
-			return fmt.Errorf("variables[%d].topic cannot be empty", varIndex)
-		}
-	}
 	return nil
 }
 
@@ -92,22 +64,12 @@ func (c *Config) Validate() error {
 		c.ClientId = "mqtt-asterisk-dial"
 	}
 
-	if c.CallFileDir == "" {
-		return fmt.Errorf("call_file_dir cannot be empty")
+	if c.SIP.Host == "" {
+		return fmt.Errorf("sip.host cannot be empty")
 	}
 
-	if err := checkDirExists(c.CallFileDir); err != nil {
-		return fmt.Errorf("invalid call_file_dir: %v", err)
-	}
-
-	if len(c.Calls) == 0 {
-		return fmt.Errorf("calls cannot be empty")
-	}
-
-	for callIndex, call := range c.Calls {
-		if err := call.Validate(); err != nil {
-			return fmt.Errorf("calls[%d]: %v", callIndex, err)
-		}
+	if len(c.Messages) == 0 {
+		return fmt.Errorf("messages cannot be empty")
 	}
 
 	return nil

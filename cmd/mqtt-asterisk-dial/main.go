@@ -38,20 +38,13 @@ func main() {
 		log.Fatal(token.Error())
 	}
 
-	if len(cfg.Calls) == 0 {
-		log.Fatalf("No calls configured in the configuration file %s", *confFile)
+	dialer, err := dial.NewDialer(mqttClient, cfg)
+	if err != nil {
+		log.Fatalf("Error creating dialer: %v", err)
 	}
 
-	for _, call := range cfg.Calls {
-		log.Printf("Processing call: %s", call.Name)
-		dialer, err := dial.NewDialer(mqttClient, cfg.CallFileDir, call)
-		if err != nil {
-			log.Fatalf("Error creating dialer: %v", err)
-		}
-
-		if err = dialer.Start(); err != nil {
-			log.Fatalf("Error starting call %s: %v", call.Name, err)
-		}
+	if err = dialer.Start(); err != nil {
+		log.Fatalf("Error starting dialer: %v", err)
 	}
 
 	// Wait until the app is interrupted

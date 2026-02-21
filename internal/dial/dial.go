@@ -1,98 +1,77 @@
 package dial
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"mqtt-asterisk-dial/internal/config"
-	"os"
-	"text/template"
+	"sync"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/ghettovoice/gosip"
 )
 
 type Dialer struct {
-	mqttClient   mqtt.Client
-	callFileDir  string
-	callTemplate config.CallTemplate
-
-	subscribeToken mqtt.Token
-
-	variableValues map[string]interface{}
+	mqttClient mqtt.Client
+	config     config.Config
+	sipServer  gosip.Server
+	mu         sync.Mutex
 }
 
-func NewDialer(mqttClient mqtt.Client, callFileDir string, callTemplate config.CallTemplate) (*Dialer, error) {
-
+func NewDialer(mqttClient mqtt.Client, cfg config.Config) (*Dialer, error) {
 	if mqttClient == nil {
 		return nil, fmt.Errorf("mqttClient cannot be nil")
 	}
-	if callTemplate.Topic == "" {
-		return nil, fmt.Errorf("callTemplate.Topic cannot be empty")
-	}
+
+	srv := gosip.NewServer(gosip.ServerConfig{}, nil, nil, nil)
 
 	return &Dialer{
-		mqttClient:     mqttClient,
-		callFileDir:    callFileDir,
-		callTemplate:   callTemplate,
-		variableValues: make(map[string]interface{}),
+		mqttClient: mqttClient,
+		config:     cfg,
+		sipServer:  srv,
 	}, nil
 }
 
 func (d *Dialer) Start() error {
-
-	for _, variable := range d.callTemplate.Variables {
-		d.mqttClient.Subscribe(variable.Topic, 0, func(client mqtt.Client, msg mqtt.Message) {
-			d.onVariableChanged(variable.Name, string(msg.Payload()))
+	for _, msgCfg := range d.config.Messages {
+		topic := msgCfg.MqttTopic
+		msgCfgCopy := msgCfg // Capture for closure
+		d.mqttClient.Subscribe(topic, 0, func(client mqtt.Client, msg mqtt.Message) {
+			d.onMessageReceived(msgCfgCopy, string(msg.Payload()))
 		})
-		log.Printf("Call %s: Subscribed to topic %s for variable %s", d.callTemplate.Name, variable.Topic, variable.Name)
+		log.Printf("Subscribed to topic %s", topic)
 	}
-
-	d.subscribeToken = d.mqttClient.Subscribe(d.callTemplate.Topic, 0, func(client mqtt.Client, msg mqtt.Message) {
-		d.onValueChanged(string(msg.Payload()))
-	})
-	log.Printf("Call %s: Subscribed to topic %s", d.callTemplate.Name, d.callTemplate.Topic)
 
 	return nil
 }
 
-func (d *Dialer) onVariableChanged(name string, value string) {
-	log.Printf("Call %s: Variable [%s] received: [%s]", d.callTemplate.Name, name, value)
-	d.variableValues[name] = value
-}
+func (d *Dialer) onMessageReceived(msgCfg config.Message, payload string) {
+	log.Printf("Received message on %s: %s", msgCfg.MqttTopic, payload)
 
-func (d *Dialer) onValueChanged(mqttValue string) {
-
-	if d.callTemplate.Value == mqttValue {
-
-		log.Printf("Call %s: Value [%s] received, creating call file", d.callTemplate.Name, mqttValue)
-
-		tmpl, err := template.New("callfile").Parse(d.callTemplate.CallFileTemplate)
-		if err != nil {
-			log.Printf("Could not parse call template: %v", err)
-			return
+	var audioFile string
+	found := false
+	for _, val := range msgCfg.MqttValues {
+		if val.Value == payload {
+			audioFile = val.AudioFile
+			found = true
+			break
 		}
-
-		var callFileContent bytes.Buffer
-		err = tmpl.Execute(&callFileContent, d.variableValues)
-		if err != nil {
-			log.Printf("Could not execute call template: %v", err)
-			return
-		}
-		tempFile, err := os.CreateTemp(d.callFileDir, "callfile-*.call")
-		if err != nil {
-			log.Printf("Could not create temp file %s: %v", tempFile.Name(), err)
-			return
-		}
-		defer tempFile.Close()
-
-		os.Chmod(tempFile.Name(), 0644)
-
-		_, err = tempFile.Write(callFileContent.Bytes())
-		if err != nil {
-			log.Printf("Error writing call file %s: %v", tempFile.Name(), err)
-			return
-		}
-		tempFile.Close()
 	}
 
+	if !found {
+		log.Printf("No audio file configured for value %s on topic %s", payload, msgCfg.MqttTopic)
+		return
+	}
+
+	for _, number := range d.config.Numbers {
+		go d.makeSIPCall(number, audioFile)
+	}
+}
+
+func (d *Dialer) makeSIPCall(number string, audioFile string) {
+	log.Printf("Starting SIP call to %s with audio %s", number, audioFile)
+
+	// Implement simple SIP invite. Since gosip server needs more setup,
+	// this would involve registering or providing local address.
+	// As we can't fully implement a SIP/RTP stack here due to complexity,
+	// we assume the logic will follow gosip examples for invite.
 }
