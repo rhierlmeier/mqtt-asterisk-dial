@@ -10,6 +10,8 @@ github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWo
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/ghettovoice/gosip v0.0.0-20260213084653-fc443dc7211f h1:faHN2/ZFSv8HTpfthZrXpwhVKyRogCLiEMiMd4u9MI4=
 github.com/ghettovoice/gosip v0.0.0-20260213084653-fc443dc7211f/go.mod h1:Cb2Ioas/4d5T9XUMFKLxjMxjmZVBONNrICOyiDdS4Xw=
+github.com/ghettovoice/gosip v0.0.0-20260508110231-707fe53af40f h1:9iPXVnOde2Nv2Zaqwvc7F+wOpT8hE3ZBOQ3InOYcM+g=
+github.com/ghettovoice/gosip v0.0.0-20260508110231-707fe53af40f/go.mod h1:Cb2Ioas/4d5T9XUMFKLxjMxjmZVBONNrICOyiDdS4Xw=
 github.com/gobwas/httphead v0.1.0 h1:exrUm0f4YX0L7EBwZHuCF4GDp8aJfVeBrlLQrs6NqWU=
 github.com/gobwas/httphead v0.1.0/go.mod h1:O/RXo79gxV8G+RqlR/otEwx4Q36zl9rqC5u12GKvMCM=
 github.com/gobwas/pool v0.2.1 h1:xfeeEhW7pwmX8nuLVlqbzVc7udMDrwetjEv+TZIz1og=
