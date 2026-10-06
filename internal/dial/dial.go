@@ -38,18 +38,26 @@ func NewDialer(mqttClient mqtt.Client, callFileDir string, callTemplate config.C
 	}, nil
 }
 
+// Start subscribes to the topics of the call. It must be called after every
+// (re)connect, because the broker drops the subscriptions of a clean session.
 func (d *Dialer) Start() error {
 
 	for _, variable := range d.callTemplate.Variables {
-		d.mqttClient.Subscribe(variable.Topic, 0, func(client mqtt.Client, msg mqtt.Message) {
+		token := d.mqttClient.Subscribe(variable.Topic, 0, func(client mqtt.Client, msg mqtt.Message) {
 			d.onVariableChanged(variable.Name, string(msg.Payload()))
 		})
+		if token.Wait() && token.Error() != nil {
+			return fmt.Errorf("call %s: could not subscribe to topic %s: %w", d.callTemplate.Name, variable.Topic, token.Error())
+		}
 		log.Printf("Call %s: Subscribed to topic %s for variable %s", d.callTemplate.Name, variable.Topic, variable.Name)
 	}
 
 	d.subscribeToken = d.mqttClient.Subscribe(d.callTemplate.Topic, 0, func(client mqtt.Client, msg mqtt.Message) {
 		d.onValueChanged(string(msg.Payload()))
 	})
+	if d.subscribeToken.Wait() && d.subscribeToken.Error() != nil {
+		return fmt.Errorf("call %s: could not subscribe to topic %s: %w", d.callTemplate.Name, d.callTemplate.Topic, d.subscribeToken.Error())
+	}
 	log.Printf("Call %s: Subscribed to topic %s", d.callTemplate.Name, d.callTemplate.Topic)
 
 	return nil

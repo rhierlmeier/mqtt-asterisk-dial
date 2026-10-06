@@ -26,21 +26,33 @@ func main() {
 		log.Fatalf("Error loading config: %v", err)
 	}
 
+	if len(cfg.Calls) == 0 {
+		log.Fatalf("No calls configured in the configuration file %s", *confFile)
+	}
+
+	var dialers []*dial.Dialer
+
+	// Subscriptions are (re)established in the OnConnect handler: with a clean
+	// session the broker forgets them on every reconnect, e.g. after a broker restart.
 	opts := mqtt.NewClientOptions().
 		AddBroker(cfg.Broker).
 		SetClientID(cfg.ClientId).
 		SetUsername(cfg.Username).
-		SetPassword(cfg.Password)
+		SetPassword(cfg.Password).
+		SetOnConnectHandler(func(client mqtt.Client) {
+			log.Printf("Connected to MQTT broker %s", cfg.Broker)
+			for _, dialer := range dialers {
+				if err := dialer.Start(); err != nil {
+					log.Printf("Error subscribing: %v", err)
+				}
+			}
+		}).
+		SetConnectionLostHandler(func(client mqtt.Client, err error) {
+			log.Printf("Connection to MQTT broker lost: %v", err)
+		})
 
 	// Initialize MQTT client
 	mqttClient := mqtt.NewClient(opts)
-	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatal(token.Error())
-	}
-
-	if len(cfg.Calls) == 0 {
-		log.Fatalf("No calls configured in the configuration file %s", *confFile)
-	}
 
 	for _, call := range cfg.Calls {
 		log.Printf("Processing call: %s", call.Name)
@@ -48,10 +60,11 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error creating dialer: %v", err)
 		}
+		dialers = append(dialers, dialer)
+	}
 
-		if err = dialer.Start(); err != nil {
-			log.Fatalf("Error starting call %s: %v", call.Name, err)
-		}
+	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
+		log.Fatal(token.Error())
 	}
 
 	// Wait until the app is interrupted
