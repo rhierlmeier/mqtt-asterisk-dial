@@ -206,7 +206,7 @@ func TestCallTemplateValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.callTemplate.Validate(); (err != nil) != tt.wantErr {
+			if err := tt.callTemplate.Validate(false); (err != nil) != tt.wantErr {
 				t.Errorf("CallTemplate.Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
