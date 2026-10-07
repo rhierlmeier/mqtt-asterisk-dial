@@ -49,12 +49,23 @@ for each call. Note that for a `Local` channel whose dialplan never answers
 the channel itself (e.g. `Dial` with a `U()` subroutine that aborts the
 bridge), Asterisk reports `Failure` with reason 0 even if the callee answered.
 
-## Health endpoint
+## Health endpoints
 
-If `health_listen` is set, `GET /healthz` returns 200 when the MQTT
-connection is open, all topics are subscribed since the last (re)connect and,
-in AMI mode, the AMI session is logged in. Otherwise it returns 503 with the
-reasons. Use it as a liveness probe.
+If `health_listen` is set, two endpoints are served:
+
+- `GET /healthz` returns 200 when the MQTT connection is open, all topics are
+  subscribed since the last (re)connect and, in AMI mode, the AMI session is
+  logged in. Otherwise it returns 503 with the reasons. Use it as a liveness
+  probe.
+- `GET /readyz` checks the same and, if `heartbeat` is configured, that a
+  message arrived on the heartbeat topic within `max_age` seconds. Use it as
+  a readiness probe.
+
+The heartbeat detects the case where the connection looks fine but messages
+no longer reach the dialer. Publish to the heartbeat topic periodically from
+an external job, e.g. a cron job running `mosquitto_pub`. After a start the
+dialer allows `max_age` for the first heartbeat. A missing heartbeat is not
+fixed by a restart, so it only affects readiness.
 
 ## Usage in Docker
 

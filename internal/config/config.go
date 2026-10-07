@@ -20,11 +20,32 @@ type Config struct {
 	// instead of call files.
 	Ami *AmiConfig `yaml:"ami"`
 
-	// HealthListen is the listen address of the health endpoint
-	// (e.g. "127.0.0.1:8080"). Empty disables the endpoint.
+	// HealthListen is the listen address of the health endpoints
+	// (e.g. "127.0.0.1:8080"). Empty disables the endpoints.
 	HealthListen string `yaml:"health_listen"`
 
+	// Heartbeat makes /readyz fail when no message arrives on a topic that
+	// is published to periodically.
+	Heartbeat *HeartbeatConfig `yaml:"heartbeat"`
+
 	Calls []CallTemplate `yaml:"calls"`
+}
+
+// HeartbeatConfig configures the heartbeat check.
+type HeartbeatConfig struct {
+	Topic string `yaml:"topic"`
+	// MaxAge in seconds after the last heartbeat (default 900).
+	MaxAge int `yaml:"max_age"`
+}
+
+func (h *HeartbeatConfig) Validate() error {
+	if h.Topic == "" {
+		return fmt.Errorf("topic cannot be empty")
+	}
+	if h.MaxAge == 0 {
+		h.MaxAge = 900
+	}
+	return nil
 }
 
 // AmiConfig configures the connection to the Asterisk Manager Interface.
@@ -187,6 +208,12 @@ func (c *Config) Validate() error {
 
 		if err := checkDirExists(c.CallFileDir); err != nil {
 			return fmt.Errorf("invalid call_file_dir: %v", err)
+		}
+	}
+
+	if c.Heartbeat != nil {
+		if err := c.Heartbeat.Validate(); err != nil {
+			return fmt.Errorf("invalid heartbeat: %v", err)
 		}
 	}
 

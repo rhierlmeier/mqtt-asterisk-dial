@@ -4,9 +4,16 @@
 broker: ssl://localhost:8883
 client_id: mqtt-asterisk-dial
 
-# Health endpoint (optional): GET /healthz returns 200 if MQTT is connected,
+# Health endpoints (optional): GET /healthz returns 200 if MQTT is connected,
 # all topics are subscribed and the AMI session is logged in, otherwise 503.
+# GET /readyz additionally checks the heartbeat.
 health_listen: 127.0.0.1:8080
+
+# Heartbeat (optional): /readyz fails if no message arrived on this topic for
+# max_age seconds (default 900). Publish to it periodically from outside.
+heartbeat:
+  topic: monitoring/heartbeat/mqtt-asterisk-dial
+  max_age: 900
 
 # Connection to the Asterisk Manager Interface. The login uses the MD5
 # challenge, the secret is never sent in plain text.

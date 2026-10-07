@@ -114,3 +114,20 @@ calls:
 		t.Errorf("timeout = %d, want 200", c.Calls[0].Originate.Timeout)
 	}
 }
+
+func TestConfigValidateHeartbeat(t *testing.T) {
+	c := validAmiConfig()
+	c.Heartbeat = &HeartbeatConfig{}
+	if err := c.Validate(); err == nil {
+		t.Error("expected error for empty heartbeat topic")
+	}
+
+	c = validAmiConfig()
+	c.Heartbeat = &HeartbeatConfig{Topic: "monitoring/heartbeat/x"}
+	if err := c.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if c.Heartbeat.MaxAge != 900 {
+		t.Errorf("max_age = %d, want 900", c.Heartbeat.MaxAge)
+	}
+}
