@@ -1,0 +1,49 @@
+# Sample configuration for AMI mode: calls are placed via the Asterisk Manager
+# Interface (Originate action) instead of call files.
+
+broker: ssl://localhost:8883
+client_id: mqtt-asterisk-dial
+
+# Health endpoints (optional): GET /healthz returns 200 if MQTT is connected,
+# all topics are subscribed and the AMI session is logged in, otherwise 503.
+# GET /readyz additionally checks the heartbeat.
+health_listen: 127.0.0.1:8080
+
+# Heartbeat (optional): /readyz fails if no message arrived on this topic for
+# max_age seconds (default 900). Publish to it periodically from outside.
+heartbeat:
+  topic: monitoring/heartbeat/mqtt-asterisk-dial
+  max_age: 900
+
+# Connection to the Asterisk Manager Interface. The login uses the MD5
+# challenge, the secret is never sent in plain text.
+ami:
+  host: asterisk
+  # Optional, default 5038
+  port: 5038
+  username: dialer
+  # The environment variable AMI_SECRET overrides this value.
+  secret: change-me
+
+calls:
+  - name: Hargassner Stoermeldung
+    topic: homie/hargassner/stoerung/active
+    value: "true"
+
+    # Originate action. channel, context, exten and the setvar values are Go
+    # templates with access to the variables below.
+    originate:
+      channel: Local/start@heizung_melde_kette
+      context: ende
+      exten: s
+      # Optional, default 1
+      priority: 1
+      # Seconds Asterisk waits for the channel to be answered (default 30)
+      timeout: 200
+      # Channel variables; the "__" prefix makes them inheritable
+      setvar:
+        __stoerNr: "{{ .stoerNr }}"
+
+    variables:
+      - name: stoerNr
+        topic: homie/hargassner/stoerung/nr
