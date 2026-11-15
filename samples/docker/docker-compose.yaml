@@ -1,7 +1,7 @@
 
 services:
   asterisk:
-    image: rhierlmeier/asterisk:latest
+    image: ghcr.io/rhierlmeier/asterisk:latest
     container_name: asterisk
     # Run asterisk in host network mode
     # When not running in host network mode, then additional configuration
@@ -14,7 +14,7 @@ services:
       - ./sip.conf:/etc/asterisk/sip.conf
 
   mqtt-dial:
-    image: rhierlmeier/mqtt-asterisk-dial:latest
+    image: ghcr.io/rhierlmeier/mqtt-asterisk-dial:latest
     container_name: mqtt-dial
     volumes:
       - ./mqtt-dial-config.yaml:/app/config.yaml
